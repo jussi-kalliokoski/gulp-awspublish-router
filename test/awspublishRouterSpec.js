@@ -14,6 +14,21 @@ var createFile = function (options) {
     return file;
 };
 
+var createSimpleTest = function (options, callback) {
+    return function () {
+        var stream = awspublishRouter(options);
+
+        var file = createFile({
+            path: "/foo/bar.html",
+            base: "/foo/",
+            contents: new Buffer("meow")
+        });
+
+        stream.write(file);
+        callback(file);
+    };
+};
+
 describe("awspublishRouter", function () {
     it("should route the file with the original key", function () {
         var stream = awspublishRouter({
@@ -147,4 +162,123 @@ describe("awspublishRouter", function () {
         stream.write(file);
         file.s3.headers["Content-Type"].should.equal("text/plain");
     });
+
+    it("should apply cache headers according to the `cacheTime` value in the route, " +
+            "using private and no-transform by default and no `Expires` header", createSimpleTest({
+                routes: {
+                    "^.+$": {
+                        key: "$&",
+                        cacheTime: 300
+                    }
+                }
+            }, function (file) {
+        var directives = file.s3.headers["Cache-Control"].split(", ");
+        directives.should.contain("max-age=300");
+        directives.should.contain("private");
+        directives.should.not.contain("public");
+        directives.should.contain("no-transform");
+        expect(file.s3.headers.Expires).to.equal(undefined);
+    }));
+
+    it("should allow defining a default cache time in the cache options", createSimpleTest({
+                cache: {
+                    cacheTime: 500
+                },
+
+                routes: {
+                    "^.+$": "$&"
+                }
+            }, function (file) {
+        var directives = file.s3.headers["Cache-Control"].split(", ");
+        directives.should.contain("max-age=500");
+    }));
+
+    it("should allow enabling `public` in the route", createSimpleTest({
+                routes: {
+                    "^.+$": {
+                        key: "$&",
+                        cacheTime: 300,
+                        public: true
+                    }
+                }
+            }, function (file) {
+        var directives = file.s3.headers["Cache-Control"].split(", ");
+        directives.should.contain("public");
+        directives.should.not.contain("private");
+    }));
+
+    it("should allow enabling `public` in the cache options", createSimpleTest({
+                cache: {
+                    public: true
+                },
+
+                routes: {
+                    "^.+$": {
+                        key: "$&",
+                        cacheTime: 300
+                    }
+                }
+            }, function (file) {
+        var directives = file.s3.headers["Cache-Control"].split(", ");
+        directives.should.contain("public");
+        directives.should.not.contain("private");
+    }));
+
+    it("should allow enabling transforms in the route", createSimpleTest({
+                routes: {
+                    "^.+$": {
+                        key: "$&",
+                        cacheTime: 300,
+                        allowTransform: true
+                    }
+                }
+            }, function (file) {
+        var directives = file.s3.headers["Cache-Control"].split(", ");
+        directives.should.not.contain("no-transform");
+    }));
+
+    it("should allow enabling transforms in the cache options", createSimpleTest({
+                cache: {
+                    allowTransform: true
+                },
+
+                routes: {
+                    "^.+$": {
+                        key: "$&",
+                        cacheTime: 300
+                    }
+                }
+            }, function (file) {
+        var directives = file.s3.headers["Cache-Control"].split(", ");
+        directives.should.not.contain("no-transform");
+    }));
+
+    it("should allow enabling the Expires header in the route", createSimpleTest({
+                routes: {
+                    "^.+$": {
+                        key: "$&",
+                        cacheTime: 300,
+                        useExpires: true
+                    }
+                }
+            }, function (file) {
+        Math.abs(new Date(file.s3.headers.Expires) - Date.now()).should.be.above(250 * 1000);
+        Math.abs(new Date(file.s3.headers.Expires) - Date.now()).should.be.below(350 * 1000);
+    }));
+
+    it("should allow enabling Expires header in the cache options", createSimpleTest({
+                cache: {
+                    useExpires: true
+                },
+
+                routes: {
+                    "^.+$": {
+                        key: "$&",
+                        cacheTime: 300
+                    }
+                }
+            }, function (file) {
+        Math.abs(new Date(file.s3.headers.Expires) - Date.now()).should.be.above(250 * 1000);
+        Math.abs(new Date(file.s3.headers.Expires) - Date.now()).should.be.below(350 * 1000);
+    }));
 });

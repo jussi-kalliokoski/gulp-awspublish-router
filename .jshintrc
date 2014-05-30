@@ -14,6 +14,7 @@
   "overrides": {
     "test/**/*.js": {
       "predef": [
+        "expect",
         "describe",
         "it",
         "before",

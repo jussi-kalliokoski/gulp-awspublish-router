@@ -5,14 +5,24 @@ var through = require("through2");
 var awspublish = require("gulp-awspublish");
 
 var passThroughStream = require("./lib/utils/passThroughStream");
+var applyCacheHeaders = require("./lib/utils/applyCacheHeaders");
+
+var cacheDefaults = {
+    cacheTime: null,
+    public: false,
+    allowTransform: false,
+    useExpires: false
+};
 
 module.exports = function (options) {
+    var cacheOptions = _.extend({}, cacheDefaults, options.cache);
+
     var routes = _.map(options.routes, function (value, key) {
         if ( typeof value === "string" ) {
             value = { key: value };
         }
 
-        return _.extend({
+        return _.extend({}, cacheOptions, {
             route: key,
             routeMatcher: new RegExp(key),
             key: "$&",
@@ -28,6 +38,7 @@ module.exports = function (options) {
         });
 
         file.s3.path = file.s3.path.replace(route.routeMatcher, route.key);
+        applyCacheHeaders(file, route);
         _.extend(file.s3.headers, route.headers);
 
         if ( route.gzip ) {
