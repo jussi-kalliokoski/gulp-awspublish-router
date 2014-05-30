@@ -281,4 +281,24 @@ describe("awspublishRouter", function () {
         Math.abs(new Date(file.s3.headers.Expires) - Date.now()).should.be.above(250 * 1000);
         Math.abs(new Date(file.s3.headers.Expires) - Date.now()).should.be.below(350 * 1000);
     }));
+
+    it("should initialize awspublish options for the file if not predefined", function () {
+        var stream = awspublishRouter({
+            routes: {
+                "^.+$": {
+                    key: "$&"
+                }
+            }
+        });
+
+        var file = new File({
+            path: "/foo/bar.html",
+            base: "/foo/",
+            contents: new Buffer("meow")
+        });
+
+        stream.write(file);
+        file.s3.path.should.equal("bar.html");
+        file.s3.headers.should.deep.equal({});
+    });
 });

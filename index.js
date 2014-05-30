@@ -6,6 +6,7 @@ var awspublish = require("gulp-awspublish");
 
 var passThroughStream = require("./lib/utils/passThroughStream");
 var applyCacheHeaders = require("./lib/utils/applyCacheHeaders");
+var initFile = require("./lib/utils/initFile");
 
 var cacheDefaults = {
     cacheTime: null,
@@ -32,6 +33,7 @@ module.exports = function (options) {
 
     return through.obj(function (file, encoding, callback) {
         var self = this;
+        initFile(file);
 
         var route = _.find(routes, function (route) {
             return route.routeMatcher.test(file.relative);
