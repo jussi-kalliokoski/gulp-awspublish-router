@@ -1,7 +1,6 @@
 "use strict";
 
 var awspublishRouter = require("../index.js");
-var awspublish = require("gulp-awspublish");
 var File = require("vinyl");
 
 var createFile = function (options) {
@@ -15,18 +14,9 @@ var createFile = function (options) {
     return file;
 };
 
-var createMockPublisher = function () {
-    return awspublish.create({
-        key: "fake",
-        secret: "fake",
-        bucket: "fake"
-    });
-};
-
 describe("awspublishRouter", function () {
     it("should route the file with the original key", function () {
         var stream = awspublishRouter({
-            publisher: createMockPublisher(),
             routes: {
                 "^bar\\.html$": {
                     key: "wrong"
@@ -48,7 +38,6 @@ describe("awspublishRouter", function () {
 
     it("should route the file with the specified key", function () {
         var stream = awspublishRouter({
-            publisher: createMockPublisher(),
             routes: {
                 "^bar\\.html$": {
                     key: "cat"
@@ -70,7 +59,6 @@ describe("awspublishRouter", function () {
 
     it("should allow RegExp backreference for the key", function () {
         var stream = awspublishRouter({
-            publisher: createMockPublisher(),
             routes: {
                 "^(\\w+)\\.html$": "meh/$1"
             }
@@ -84,5 +72,57 @@ describe("awspublishRouter", function () {
 
         stream.write(file);
         file.s3.path.should.equal("meh/bar");
+    });
+
+    it("should gzip the file if `gzip` is enabled for the route", function (callback) {
+        var stream = awspublishRouter({
+            routes: {
+                "^bar\\.html$": {
+                    key: "$&",
+                    gzip: true
+                }
+            }
+        });
+
+        var file = createFile({
+            path: "/foo/bar.html",
+            base: "/foo/",
+            contents: new Buffer("meow")
+        });
+
+        stream.on("data", function (file) {
+            file.s3.headers["Content-Encoding"].should.equal("gzip");
+            file.s3.path.should.equal("bar.html");
+            callback();
+        });
+
+        stream.write(file);
+    });
+
+    it("should gzip the file with the options in `gzip` of the route", function (callback) {
+        var stream = awspublishRouter({
+            routes: {
+                "^bar\\.html$": {
+                    key: "$&",
+                    gzip: {
+                        ext: ".gz"
+                    }
+                }
+            }
+        });
+
+        var file = createFile({
+            path: "/foo/bar.html",
+            base: "/foo/",
+            contents: new Buffer("meow")
+        });
+
+        stream.on("data", function (file) {
+            file.s3.headers["Content-Encoding"].should.equal("gzip");
+            file.s3.path.should.equal("bar.html.gz");
+            callback();
+        });
+
+        stream.write(file);
     });
 });

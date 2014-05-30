@@ -2,6 +2,9 @@
 
 var _ = require("lodash");
 var through = require("through2");
+var awspublish = require("gulp-awspublish");
+
+var passThroughStream = require("./lib/utils/passThroughStream");
 
 module.exports = function (options) {
     var routes = _.map(options.routes, function (value, key) {
@@ -12,22 +15,34 @@ module.exports = function (options) {
         return _.extend({
             route: key,
             routeMatcher: new RegExp(key),
-            key: "$&"
+            key: "$&",
+            gzip: false
         }, value);
     });
 
     return through.obj(function (file, encoding, callback) {
-        _.each(routes, function (route) {
-            if ( !route.routeMatcher.test(file.relative) ) {
-                return;
-            }
+        var self = this;
 
-            file.s3.path = file.s3.path.replace(route.routeMatcher, route.key);
-
-            return false;
+        var route = _.find(routes, function (route) {
+            return route.routeMatcher.test(file.relative);
         });
 
-        this.push(file);
-        callback();
+        file.s3.path = file.s3.path.replace(route.routeMatcher, route.key);
+
+        if ( route.gzip ) {
+            if ( route.gzip === true ) {
+                route.gzip = {};
+            }
+
+            passThroughStream({
+                target: self,
+                modifier: awspublish.gzip(route.gzip),
+                callback: callback,
+                file: file
+            });
+        } else {
+            self.push(file);
+            callback();
+        }
     });
 };
