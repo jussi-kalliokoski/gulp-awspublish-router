@@ -125,4 +125,26 @@ describe("awspublishRouter", function () {
 
         stream.write(file);
     });
+
+    it("should apply given headers to the file if `headers` is specified for the route", function () {
+        var stream = awspublishRouter({
+            routes: {
+                "^bar\\.html$": {
+                    key: "$&",
+                    headers: {
+                        "Content-Type": "text/plain"
+                    }
+                }
+            }
+        });
+
+        var file = createFile({
+            path: "/foo/bar.html",
+            base: "/foo/",
+            contents: new Buffer("meow")
+        });
+
+        stream.write(file);
+        file.s3.headers["Content-Type"].should.equal("text/plain");
+    });
 });

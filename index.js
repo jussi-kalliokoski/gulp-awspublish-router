@@ -28,6 +28,7 @@ module.exports = function (options) {
         });
 
         file.s3.path = file.s3.path.replace(route.routeMatcher, route.key);
+        _.extend(file.s3.headers, route.headers);
 
         if ( route.gzip ) {
             if ( route.gzip === true ) {
