@@ -174,8 +174,8 @@ describe("awspublishRouter", function () {
             }, function (file) {
         var directives = file.s3.headers["Cache-Control"].split(", ");
         directives.should.contain("max-age=300");
-        directives.should.contain("private");
-        directives.should.not.contain("public");
+        directives.should.contain("public");
+        directives.should.not.contain("private");
         directives.should.contain("no-transform");
         expect(file.s3.headers.Expires).to.equal(undefined);
     }));
@@ -198,18 +198,18 @@ describe("awspublishRouter", function () {
                     "^.+$": {
                         key: "$&",
                         cacheTime: 300,
-                        public: true
+                        public: false
                     }
                 }
             }, function (file) {
         var directives = file.s3.headers["Cache-Control"].split(", ");
-        directives.should.contain("public");
-        directives.should.not.contain("private");
+        directives.should.contain("private");
+        directives.should.not.contain("public");
     }));
 
     it("should allow enabling `public` in the cache options", createSimpleTest({
                 cache: {
-                    public: true
+                    public: false
                 },
 
                 routes: {
@@ -220,8 +220,8 @@ describe("awspublishRouter", function () {
                 }
             }, function (file) {
         var directives = file.s3.headers["Cache-Control"].split(", ");
-        directives.should.contain("public");
-        directives.should.not.contain("private");
+        directives.should.contain("private");
+        directives.should.not.contain("public");
     }));
 
     it("should allow enabling transforms in the route", createSimpleTest({

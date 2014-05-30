@@ -10,7 +10,7 @@ var initFile = require("./lib/utils/initFile");
 
 var cacheDefaults = {
     cacheTime: null,
-    public: false,
+    public: true,
     allowTransform: false,
     useExpires: false
 };
