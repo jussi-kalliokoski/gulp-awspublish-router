@@ -353,4 +353,41 @@ describe("awspublishRouter", function () {
         file.s3.path.should.equal("bar.html");
         file.s3.headers.should.deep.equal({});
     });
+
+    it("should ignore empty files / directories (issue #1)", function (callback) {
+        var stream = awspublishRouter({
+            routes: {
+                "^.+$": {
+                    key: "$&"
+                }
+            }
+        });
+
+        var file1 = new File({
+            path: "/foo/bar.html",
+            base: "/foo/",
+            contents: new Buffer("meow")
+        });
+
+        var file2 = new File({
+            path: "/foo/",
+            base: "/foo/",
+            contents: null
+        });
+
+        stream.on("data", function (file) {
+            file.relative.should.equal("bar.html");
+        });
+
+        stream.on("end", function () {
+            callback();
+        });
+
+        stream.write(file1);
+        stream.write(file2);
+
+        process.nextTick(function () {
+            stream.end();
+        });
+    });
 });
