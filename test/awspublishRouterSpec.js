@@ -282,6 +282,58 @@ describe("awspublishRouter", function () {
         Math.abs(new Date(file.s3.headers.Expires) - Date.now()).should.be.below(350 * 1000);
     }));
 
+    it("should not stop after first file with gzip (issue #2)", function (callback) {
+        var stream = awspublishRouter({
+            routes: {
+                "^.+$": {
+                    key: "$&",
+                    gzip: true
+                }
+            }
+        });
+
+        var file1 = createFile({
+            path: "/foo/bar.html",
+            base: "/foo/",
+            contents: new Buffer("meow")
+        });
+
+        var file2 = createFile({
+            path: "/bar/foo.html",
+            base: "/bar/",
+            contents: new Buffer("woof")
+        });
+
+        var filesProcessed = 0;
+
+        stream.on("end", function () {
+            filesProcessed.should.equal(2);
+            callback();
+        });
+
+        stream.on("data", function (file) {
+            file.s3.headers["Content-Encoding"].should.equal("gzip");
+
+            switch ( file.relative ) {
+            case "bar.html":
+            case "foo.html":
+                file.s3.path.should.equal(file.relative);
+                break;
+            default:
+                throw new Error("unexpected file: " + file.relative);
+            }
+
+            filesProcessed += 1;
+        });
+
+        stream.write(file1);
+        stream.write(file2);
+
+        process.nextTick(function () {
+            stream.end();
+        });
+    });
+
     it("should initialize awspublish options for the file if not predefined", function () {
         var stream = awspublishRouter({
             routes: {
