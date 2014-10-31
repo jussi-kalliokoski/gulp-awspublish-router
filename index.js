@@ -32,6 +32,11 @@ module.exports = function (options) {
     });
 
     return through.obj(function (file, encoding, callback) {
+        if ( file.isNull() ) {
+            callback();
+            return;
+        }
+
         var self = this;
         initFile(file);
 
