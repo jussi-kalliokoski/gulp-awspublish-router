@@ -2,6 +2,7 @@
 
 var awspublishRouter = require("../index.js");
 var File = require("vinyl");
+var path = require("path");
 
 var createFile = function (options) {
     var file = new File(options);
@@ -352,6 +353,25 @@ describe("awspublishRouter", function () {
         stream.write(file);
         file.s3.path.should.equal("bar.html");
         file.s3.headers.should.deep.equal({});
+    });
+
+    it("should normalize paths when initializing awspublish options for the file", function () {
+        var stream = awspublishRouter({
+            routes: {
+                "^.+$": {
+                    key: "$&"
+                }
+            }
+        });
+
+        var file = new File({
+            path: path.join("foo", "bar", "baz", "qux.html"),
+            base: path.join("foo", path.sep),
+            contents: new Buffer("meow")
+        });
+
+        stream.write(file);
+        file.s3.path.should.equal("bar/baz/qux.html");
     });
 
     it("should ignore empty files / directories (issue #1)", function (callback) {
