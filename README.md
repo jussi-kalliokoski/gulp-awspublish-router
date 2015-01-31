@@ -52,12 +52,12 @@ gulp.task("publish", function () {
                     key: "$&",
                     // use gzip for assets that benefit from it
                     gzip: true,
-                    // cache static assets for 2 years
+                    // cache static assets for 20 years
                     cacheTime: 630720000
                 },
 
                 "^assets/.+$": {
-                    // cache static assets for 2 years
+                    // cache static assets for 20 years
                     cacheTime: 630720000
                 },
 
