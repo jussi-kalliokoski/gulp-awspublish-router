@@ -62,7 +62,7 @@ gulp.task("publish", function () {
                 },
 
                 // e.g. upload items/foo/bar/index.html under key items/foo/bar
-                "^items/([^/]+)/([^/]+)/index\\.html": "items/$1/$2"
+                "^items/([^/]+)/([^/]+)/index\\.html": "items/$1/$2",
 
                 "^.+\\.html": {
                     // apply gzip with extra options
