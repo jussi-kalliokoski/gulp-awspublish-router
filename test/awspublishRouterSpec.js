@@ -183,7 +183,6 @@ describe("awspublishRouter", function () {
 
         stream.write(file);
         file.s3.headers["WebsiteRedirectLocation"].should.equal("test-bar");
-
     });
 
     it("should apply cache headers according to the `cacheTime` value in the route, " +
