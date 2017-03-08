@@ -26,6 +26,7 @@ This is a function that takes an options object as its argument, and the options
 * `routes` A key-value pair of the routes and their options.
 * `cache` (optional) Override values for default cache options:
     - `cacheTime` (defaults to `null`) a value in seconds to use for cache headers. If `null`, no cache headers are applied.
+    - `sharedCacheTime` (default to `null`) a value in seconds to use for shared cache headers (`s-maxage`). `s-maxage` directive overrides both the `max-age` and `expires` header, and most well behaved CDNs will obey it.
     - `public` (defaults to `true`) a boolean value on whether to include the `public` directive in the `Cache-Control` header. If false, `private` directive is used instead.
     - `allowTransform` (defaults to `false`) a boolean value on whether to allow transforms of the cached content. If `false`, the `no-transform` directive is applied to the `Cache-Control` header.
     - `useExpires` (defaults to `false`) if specified, applies the `Expires` header as well. Use with caution as the cache will expire after the `cacheTime` has passed of the publish time.
@@ -52,8 +53,10 @@ gulp.task("publish", function () {
                     key: "$&",
                     // use gzip for assets that benefit from it
                     gzip: true,
-                    // cache static assets for 20 years
-                    cacheTime: 630720000
+                    // cache static assets for 1 week for user
+                    cacheTime: 604800,
+                    // cache static assets for 20 years on the CDN
+                    sharedCacheTime: 630720000
                 },
 
                 "^assets/.+$": {

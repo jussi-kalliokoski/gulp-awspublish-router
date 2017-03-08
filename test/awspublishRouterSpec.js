@@ -267,6 +267,24 @@ describe("awspublishRouter", function () {
         Math.abs(new Date(file.s3.headers.Expires) - Date.now()).should.be.below(350 * 1000);
     }));
 
+    it("should allow enabling the shared cache directive in the header", createSimpleTest({
+        cache: {
+            allowTransform: true
+        },
+
+        routes: {
+            "^.+$": {
+                key: "$&",
+                cacheTime: 300,
+                sharedCacheTime: 500
+            }
+        }
+    }, function (file) {
+        var directives = file.s3.headers["Cache-Control"].split(", ");
+        directives.should.contain("max-age=300");
+        directives.should.contain("s-maxage=500");
+    }));
+
     it("should allow enabling Expires header in the cache options", createSimpleTest({
                 cache: {
                     useExpires: true
