@@ -17,4 +17,4 @@ gulp.task("mocha", function (callback) {
         });
 });
 
-gulp.task("test", ["mocha"]);
+gulp.task("test", gulp.series("mocha"));
