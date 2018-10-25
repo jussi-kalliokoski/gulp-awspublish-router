@@ -164,6 +164,27 @@ describe("awspublishRouter", function () {
         file.s3.headers["Content-Type"].should.equal("text/plain");
     });
 
+    it("should apply RegExp matches to route specific `headers`", function () {
+        var stream = awspublishRouter({
+            routes: {
+                "^(\\w+)+\\.html$": {
+                    headers: {
+                        "WebsiteRedirectLocation": "test-$1"
+                    }
+                }
+            }
+        });
+
+        var file = createFile({
+            path: "/foo/bar.html",
+            base: "/foo/",
+            contents: new Buffer("meow")
+        });
+
+        stream.write(file);
+        file.s3.headers["WebsiteRedirectLocation"].should.equal("test-bar");
+    });
+
     it("should apply cache headers according to the `cacheTime` value in the route, " +
             "using private and no-transform by default and no `Expires` header", createSimpleTest({
                 routes: {

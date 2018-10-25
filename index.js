@@ -44,9 +44,14 @@ module.exports = function (options) {
             return route.routeMatcher.test(file.relative);
         });
 
+        var extraHeaders = {};
+        _.each(route.headers, function(val, key) {
+            extraHeaders[key] = file.s3.path.replace(route.routeMatcher, val);
+        });
+
         file.s3.path = file.s3.path.replace(route.routeMatcher, route.key);
         applyCacheHeaders(file, route);
-        _.extend(file.s3.headers, route.headers);
+        _.extend(file.s3.headers, extraHeaders);
 
         if ( route.gzip ) {
             if ( route.gzip === true ) {
